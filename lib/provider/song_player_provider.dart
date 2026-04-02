@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 
 class LyricLine {
   final Duration timestamp;
@@ -24,11 +27,14 @@ class SongPlayerProvider extends ChangeNotifier {
     'rythm/native_player',
   );
   static const EventChannel _eventChannel = EventChannel('rythm/player_events');
+  static final Random _random = Random();
 
   SongPlayerProvider() {
     _loadFavorites();
     restoreSleepTimer();
-    _listenToNativeEvents();
+    if (!kIsWeb) {
+      _listenToNativeEvents();
+    }
   }
 
   bool _isPlaying = false;
@@ -53,6 +59,8 @@ class SongPlayerProvider extends ChangeNotifier {
 
   int _currentIndex = -1;
   StreamSubscription<dynamic>? _eventSubscription;
+  VideoPlayerController? _webController;
+  bool _handlingWebCompletion = false;
   Timer? _sleepTimer;
   Timer? _sleepTicker;
   DateTime? _sleepTimerEndsAt;
@@ -80,12 +88,14 @@ class SongPlayerProvider extends ChangeNotifier {
     if (_currentIndex + 1 >= _playlist.length) return const [];
     return List.unmodifiable(_playlist.sublist(_currentIndex + 1));
   }
+
   List<Map<String, dynamic>> get queuedSongs {
     return _queuedSongIds
         .map(_songById)
         .whereType<Map<String, dynamic>>()
         .toList(growable: false);
   }
+
   Duration get sleepTimerRemaining => _sleepTimerRemaining;
   DateTime? get sleepTimerEndsAt => _sleepTimerEndsAt;
   bool get hasSleepTimer => _sleepTimerEndsAt != null;
@@ -97,9 +107,7 @@ class SongPlayerProvider extends ChangeNotifier {
 
         _position = Duration(milliseconds: map['position'] ?? 0);
         final durationMs = ((map['duration'] ?? 0) as num).toInt();
-        _duration = Duration(
-          milliseconds: durationMs < 0 ? 0 : durationMs,
-        );
+        _duration = Duration(milliseconds: durationMs < 0 ? 0 : durationMs);
         _isPlaying = map['isPlaying'] ?? false;
         _isShuffle = map['shuffle'] ?? false;
         _isRepeat = map['repeat'] ?? false;
@@ -158,6 +166,14 @@ class SongPlayerProvider extends ChangeNotifier {
     _updateCurrentSong(_playlist[_currentIndex], notify: false);
     _syncQueuedSongsWithCurrent();
 
+    if (kIsWeb) {
+      await _playCurrentWebSong();
+      await _saveLastPlayed();
+      await _updateRecentlyPlayed(song);
+      notifyListeners();
+      return;
+    }
+
     final nativeQueue = _buildNativeQueuePayload(_playlist);
     final nativeIndex = nativeQueue.indexWhere(
       (item) => item['id'].toString() == _currentSongId,
@@ -179,39 +195,96 @@ class SongPlayerProvider extends ChangeNotifier {
   }
 
   Future<void> play() async {
+    if (kIsWeb) {
+      await _webController?.play();
+      _isPlaying = _webController?.value.isPlaying ?? false;
+      notifyListeners();
+      return;
+    }
+
     await _nativeChannel.invokeMethod('play');
   }
 
   Future<void> pause() async {
+    if (kIsWeb) {
+      await _webController?.pause();
+      _isPlaying = _webController?.value.isPlaying ?? false;
+      notifyListeners();
+      return;
+    }
+
     await _nativeChannel.invokeMethod('pause');
   }
 
   Future<void> togglePlayPause() async {
+    if (kIsWeb) {
+      if (_webController == null) return;
+      if (_webController!.value.isPlaying) {
+        await pause();
+      } else {
+        await play();
+      }
+      return;
+    }
+
     await _nativeChannel.invokeMethod('togglePlayPause');
   }
 
   Future<void> seek(Duration position) async {
+    if (kIsWeb) {
+      await _webController?.seekTo(position);
+      _position = position;
+      notifyListeners();
+      return;
+    }
+
     await _nativeChannel.invokeMethod('seek', {
       'position': position.inMilliseconds,
     });
   }
 
   Future<void> playNext() async {
+    if (kIsWeb) {
+      await _playAdjacentOnWeb(next: true);
+      return;
+    }
+
     await _nativeChannel.invokeMethod('next');
   }
 
   Future<void> playPrevious() async {
+    if (kIsWeb) {
+      if (_position > const Duration(seconds: 3)) {
+        await seek(Duration.zero);
+        return;
+      }
+
+      await _playAdjacentOnWeb(next: false);
+      return;
+    }
+
     await _nativeChannel.invokeMethod('previous');
   }
 
   Future<void> toggleShuffle() async {
     _isShuffle = !_isShuffle;
+    if (kIsWeb) {
+      notifyListeners();
+      return;
+    }
+
     await _nativeChannel.invokeMethod('setShuffle', {'enabled': _isShuffle});
     notifyListeners();
   }
 
   Future<void> toggleRepeat() async {
     _isRepeat = !_isRepeat;
+    if (kIsWeb) {
+      await _webController?.setLooping(_isRepeat);
+      notifyListeners();
+      return;
+    }
+
     await _nativeChannel.invokeMethod('setRepeat', {'enabled': _isRepeat});
     notifyListeners();
   }
@@ -248,17 +321,20 @@ class SongPlayerProvider extends ChangeNotifier {
     );
     _playlist.insert(insertIndex, song);
     _queuedSongIds.add(songId);
-    final nativeQueue = _buildNativeQueuePayload(_playlist);
-    final nativeIndex = nativeQueue.indexWhere(
-      (item) => item['id'].toString() == _currentSongId,
-    );
-    unawaited(
-      _nativeChannel.invokeMethod('loadQueue', {
-        'songsJson': jsonEncode(nativeQueue),
-        'index': nativeIndex == -1 ? 0 : nativeIndex,
-        'playWhenReady': _isPlaying,
-      }),
-    );
+    if (!kIsWeb) {
+      final nativeQueue = _buildNativeQueuePayload(_playlist);
+      final nativeIndex = nativeQueue.indexWhere(
+        (item) => item['id'].toString() == _currentSongId,
+      );
+      unawaited(
+        _nativeChannel.invokeMethod('loadQueue', {
+          'songsJson': jsonEncode(nativeQueue),
+          'index': nativeIndex == -1 ? 0 : nativeIndex,
+          'playWhenReady': _isPlaying,
+        }),
+      );
+    }
+
     notifyListeners();
   }
 
@@ -274,16 +350,18 @@ class SongPlayerProvider extends ChangeNotifier {
       );
     }
 
-    final nativeQueue = _buildNativeQueuePayload(_playlist);
-    final nativeIndex = nativeQueue.indexWhere(
-      (item) => item['id'].toString() == _currentSongId,
-    );
+    if (!kIsWeb) {
+      final nativeQueue = _buildNativeQueuePayload(_playlist);
+      final nativeIndex = nativeQueue.indexWhere(
+        (item) => item['id'].toString() == _currentSongId,
+      );
 
-    await _nativeChannel.invokeMethod('loadQueue', {
-      'songsJson': jsonEncode(nativeQueue),
-      'index': nativeIndex == -1 ? 0 : nativeIndex,
-      'playWhenReady': _isPlaying,
-    });
+      await _nativeChannel.invokeMethod('loadQueue', {
+        'songsJson': jsonEncode(nativeQueue),
+        'index': nativeIndex == -1 ? 0 : nativeIndex,
+        'playWhenReady': _isPlaying,
+      });
+    }
 
     notifyListeners();
   }
@@ -424,10 +502,13 @@ class SongPlayerProvider extends ChangeNotifier {
   void _syncQueuedSongsWithCurrent() {
     if (_queuedSongIds.isEmpty) return;
 
-    _queuedSongIds = _queuedSongIds.where((songId) {
-      final index = _playlist.indexWhere((song) => song['id'].toString() == songId);
-      return index != -1 && index > _currentIndex;
-    }).toList();
+    _queuedSongIds =
+        _queuedSongIds.where((songId) {
+          final index = _playlist.indexWhere(
+            (song) => song['id'].toString() == songId,
+          );
+          return index != -1 && index > _currentIndex;
+        }).toList();
   }
 
   void _updateCurrentSong(Map<String, dynamic> song, {bool notify = true}) {
@@ -437,6 +518,8 @@ class SongPlayerProvider extends ChangeNotifier {
     _currentAlbumArt = song['album_art']?.toString();
     _currentSongUrl = song['url']?.toString();
     _currentLyrics = song['lyrics']?.toString();
+    _position = Duration.zero;
+    _duration = Duration.zero;
     _syncedLyrics = [];
 
     if (notify) {
@@ -449,7 +532,123 @@ class SongPlayerProvider extends ChangeNotifier {
     _sleepTimer?.cancel();
     _sleepTicker?.cancel();
     _eventSubscription?.cancel();
+    unawaited(_disposeWebController());
     super.dispose();
+  }
+
+  Future<void> _playCurrentWebSong({bool playWhenReady = true}) async {
+    final url = _currentSongUrl;
+    final parsedUrl = url == null ? null : Uri.tryParse(url);
+    if (parsedUrl == null || !parsedUrl.hasScheme) {
+      debugPrint(
+        'Unable to play song on web: invalid URL for $_currentSongTitle',
+      );
+      _isPlaying = false;
+      notifyListeners();
+      return;
+    }
+
+    await _disposeWebController();
+
+    final controller = VideoPlayerController.networkUrl(parsedUrl);
+    _webController = controller;
+    controller.addListener(_handleWebPlaybackUpdate);
+
+    await controller.initialize();
+    await controller.setLooping(_isRepeat);
+
+    _duration = controller.value.duration;
+    _position = controller.value.position;
+
+    if (playWhenReady) {
+      await controller.play();
+    }
+
+    _isPlaying = controller.value.isPlaying;
+    notifyListeners();
+  }
+
+  Future<void> _playAdjacentOnWeb({required bool next}) async {
+    if (_playlist.isEmpty) return;
+
+    int targetIndex;
+    if (next) {
+      if (_isShuffle && _playlist.length > 1) {
+        do {
+          targetIndex = _random.nextInt(_playlist.length);
+        } while (targetIndex == _currentIndex);
+      } else {
+        targetIndex = _currentIndex + 1;
+        if (targetIndex >= _playlist.length) {
+          _isPlaying = false;
+          notifyListeners();
+          return;
+        }
+      }
+    } else {
+      targetIndex = _currentIndex - 1;
+      if (targetIndex < 0) {
+        await seek(Duration.zero);
+        return;
+      }
+    }
+
+    _currentIndex = targetIndex;
+    final nextSong = _playlist[_currentIndex];
+    _updateCurrentSong(nextSong, notify: false);
+    _syncQueuedSongsWithCurrent();
+    await _playCurrentWebSong();
+    await _saveLastPlayed();
+    await _updateRecentlyPlayed(nextSong);
+    notifyListeners();
+  }
+
+  void _handleWebPlaybackUpdate() {
+    final controller = _webController;
+    if (controller == null) return;
+
+    final value = controller.value;
+    _position = value.position;
+    _duration = value.duration;
+    _isPlaying = value.isPlaying;
+
+    final isCompleted =
+        value.isInitialized &&
+        !value.isPlaying &&
+        value.duration > Duration.zero &&
+        value.position >= value.duration;
+
+    if (isCompleted && !_handlingWebCompletion) {
+      _handlingWebCompletion = true;
+      unawaited(
+        _handleWebTrackCompletion().whenComplete(() {
+          _handlingWebCompletion = false;
+        }),
+      );
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> _handleWebTrackCompletion() async {
+    if (_isRepeat) {
+      await _webController?.seekTo(Duration.zero);
+      await _webController?.play();
+      return;
+    }
+
+    await _playAdjacentOnWeb(next: true);
+  }
+
+  Future<void> _disposeWebController() async {
+    final controller = _webController;
+    if (controller == null) return;
+
+    controller.removeListener(_handleWebPlaybackUpdate);
+    await controller.dispose();
+    if (identical(_webController, controller)) {
+      _webController = null;
+    }
   }
 
   void _startSleepTimer(DateTime endAt, {bool persist = true}) {
@@ -495,8 +694,7 @@ class SongPlayerProvider extends ChangeNotifier {
     }
 
     final remaining = endAt.difference(DateTime.now());
-    _sleepTimerRemaining =
-        remaining.isNegative ? Duration.zero : remaining;
+    _sleepTimerRemaining = remaining.isNegative ? Duration.zero : remaining;
   }
 
   Future<void> _persistSleepTimer() async {

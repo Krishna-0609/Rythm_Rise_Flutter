@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/custom_playlist_provider.dart';
 import '../provider/song_player_provider.dart';
 import '../theme/responsive_utils.dart';
+import 'adaptive_path_image.dart';
 
 Future<void> showSongActionSheet({
   required BuildContext context,
@@ -125,7 +124,10 @@ Future<void> showSongActionSheet({
               },
             ),
             ListTile(
-              leading: const Icon(Icons.playlist_add_rounded, color: Colors.white),
+              leading: const Icon(
+                Icons.playlist_add_rounded,
+                color: Colors.white,
+              ),
               title: const Text(
                 'Add to Playlist',
                 style: TextStyle(
@@ -145,7 +147,8 @@ Future<void> showSongActionSheet({
                   color: Colors.redAccent,
                 ),
                 title: Text(
-                  customPlaylistName == null || customPlaylistName.trim().isEmpty
+                  customPlaylistName == null ||
+                          customPlaylistName.trim().isEmpty
                       ? 'Remove from Playlist'
                       : 'Remove from $customPlaylistName',
                   style: const TextStyle(
@@ -305,46 +308,17 @@ class _PlaylistThumb extends StatelessWidget {
       );
     }
 
-    if (!_looksLikeNetworkImage(imageUrl)) {
-      return Image.file(
-        File(imageUrl),
-        width: 52,
-        height: 52,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
-          return Container(
-            width: 52,
-            height: 52,
-            color: Colors.white10,
-            child: const Icon(Icons.queue_music_rounded, color: Colors.white70),
-          );
-        },
-      );
-    }
-
-    return Image.network(
-      imageUrl,
+    return AdaptivePathImage(
+      path: imageUrl,
       width: 52,
       height: 52,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) {
-        return Container(
-          width: 52,
-          height: 52,
-          color: Colors.white10,
-          child: const Icon(Icons.queue_music_rounded, color: Colors.white70),
-        );
-      },
+      fallback: Container(
+        width: 52,
+        height: 52,
+        color: Colors.white10,
+        child: const Icon(Icons.queue_music_rounded, color: Colors.white70),
+      ),
     );
   }
 }
-
-bool _looksLikeNetworkImage(String value) {
-  final trimmed = value.trim().toLowerCase();
-  return trimmed.startsWith('http://') || trimmed.startsWith('https://');
-}
-
-
-
-
-

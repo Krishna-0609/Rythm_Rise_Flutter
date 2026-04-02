@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -62,6 +63,10 @@ class _BottomPagesState extends State<BottomPages> {
   }
 
   Future<bool> _onBackPressed() async {
+    if (kIsWeb || ResponsiveUtils.isDesktop(context)) {
+      return true;
+    }
+
     final exitApp = await showDialog<bool>(
       context: context,
       builder:
@@ -111,37 +116,74 @@ class _BottomPagesState extends State<BottomPages> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveUtils.isDesktop(context);
+
     return WillPopScope(
       onWillPop: _onBackPressed,
       child: Scaffold(
         extendBody: true,
         backgroundColor: AppColors.primary,
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: _onPageChanged,
-          physics: const BouncingScrollPhysics(),
-          children: _pages,
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Material(
-            color: Colors.transparent,
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _GlobalMiniPlayer(show: _selectedIndex != 4),
-                  _BottomNavBar(
-                    selectedIndex: _selectedIndex,
-                    onTap: _onItemTapped,
+        body:
+            isDesktop
+                ? _DesktopShell(
+                  selectedIndex: _selectedIndex,
+                  onTap: _onItemTapped,
+                  child: _MainPageView(
+                    controller: _pageController,
+                    onPageChanged: _onPageChanged,
+                    pages: _pages,
                   ),
-                ],
-              ),
-            ),
-          ),
-        ),
+                )
+                : _MainPageView(
+                  controller: _pageController,
+                  onPageChanged: _onPageChanged,
+                  pages: _pages,
+                ),
+        bottomNavigationBar:
+            isDesktop
+                ? null
+                : Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: SafeArea(
+                      top: false,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _GlobalMiniPlayer(show: _selectedIndex != 4),
+                          _BottomNavBar(
+                            selectedIndex: _selectedIndex,
+                            onTap: _onItemTapped,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
       ),
+    );
+  }
+}
+
+class _MainPageView extends StatelessWidget {
+  const _MainPageView({
+    required this.controller,
+    required this.onPageChanged,
+    required this.pages,
+  });
+
+  final PageController controller;
+  final ValueChanged<int> onPageChanged;
+  final List<Widget> pages;
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView(
+      controller: controller,
+      onPageChanged: onPageChanged,
+      physics: const BouncingScrollPhysics(),
+      children: pages,
     );
   }
 }
@@ -195,7 +237,12 @@ class _BottomNavBar extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: Container(
-            margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 8),
+            margin: EdgeInsets.fromLTRB(
+              horizontalMargin,
+              0,
+              horizontalMargin,
+              8,
+            ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
@@ -236,7 +283,9 @@ class _BottomNavBar extends StatelessWidget {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 240),
                           curve: Curves.easeOutCubic,
-                          padding: EdgeInsets.symmetric(vertical: compact ? 7 : 9),
+                          padding: EdgeInsets.symmetric(
+                            vertical: compact ? 7 : 9,
+                          ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             color:
@@ -250,19 +299,25 @@ class _BottomNavBar extends StatelessWidget {
                               AnimatedScale(
                                 scale: selected ? 1.04 : 0.96,
                                 duration: const Duration(milliseconds: 220),
-                                child: _BottomNavIcon(item: item, selected: selected),
+                                child: _BottomNavIcon(
+                                  item: item,
+                                  selected: selected,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               AnimatedDefaultTextStyle(
                                 duration: const Duration(milliseconds: 220),
                                 style: TextStyle(
-                                  color: selected ? Colors.white : Colors.white70,
+                                  color:
+                                      selected ? Colors.white : Colors.white70,
                                   fontSize:
                                       selected
                                           ? (compact ? 10 : 11)
                                           : (compact ? 9 : 10),
                                   fontWeight:
-                                      selected ? FontWeight.w700 : FontWeight.w500,
+                                      selected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
                                 ),
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
@@ -330,6 +385,243 @@ class _NavItemData {
   final String? inactiveAsset;
 }
 
+class _DesktopShell extends StatelessWidget {
+  const _DesktopShell({
+    required this.selectedIndex,
+    required this.onTap,
+    required this.child,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_NavItemData>[
+      const _NavItemData(
+        label: 'Home',
+        outlinedIcon: Icons.home_outlined,
+        imageAsset: 'assets/Home_icon.png',
+      ),
+      const _NavItemData(
+        label: 'Search',
+        outlinedIcon: Icons.search_outlined,
+        imageAsset: 'assets/Search_icon.png',
+      ),
+      const _NavItemData(
+        label: 'Liked',
+        outlinedIcon: Icons.favorite_border_rounded,
+        imageAsset: 'assets/Selected_Heart.png',
+        inactiveAsset: 'assets/Heart_Icon.png',
+      ),
+      const _NavItemData(
+        label: 'Library',
+        outlinedIcon: Icons.library_music_outlined,
+        imageAsset: 'assets/library.png',
+        inactiveAsset: 'assets/library.png',
+      ),
+      const _NavItemData(
+        label: 'Profile',
+        outlinedIcon: Icons.person_outline_rounded,
+        imageAsset: 'assets/customer.png',
+        inactiveAsset: 'assets/customer.png',
+      ),
+    ];
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.all(
+          ResponsiveUtils.shellHorizontalPadding(context),
+        ),
+        child: Row(
+          children: [
+            _DesktopSidebar(
+              items: items,
+              selectedIndex: selectedIndex,
+              onTap: onTap,
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: ResponsiveUtils.pageMaxWidth(context),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(32),
+                          child: child,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: ResponsiveUtils.pageMaxWidth(context),
+                      ),
+                      child: _GlobalMiniPlayer(show: selectedIndex != 4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopSidebar extends StatelessWidget {
+  const _DesktopSidebar({
+    required this.items,
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  final List<_NavItemData> items;
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 250,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xff111523).withOpacity(0.98),
+              const Color(0xff1A2136).withOpacity(0.94),
+            ],
+          ),
+          border: Border.all(color: Colors.white10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.24),
+              blurRadius: 28,
+              offset: const Offset(0, 16),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  color: Colors.white.withOpacity(0.06),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.graphic_eq_rounded, color: AppColors.iconcolor2),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Rythm',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'A cleaner web listening space with room to breathe.',
+                style: TextStyle(color: Colors.white60, height: 1.45),
+              ),
+              const SizedBox(height: 24),
+              ...items.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                final selected = index == selectedIndex;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () => onTap(index),
+                    borderRadius: BorderRadius.circular(22),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(22),
+                        gradient:
+                            selected
+                                ? const LinearGradient(
+                                  colors: [
+                                    Color(0xffF15C8E),
+                                    Color(0xffEA8A4C),
+                                  ],
+                                )
+                                : null,
+                        color: selected ? null : Colors.white.withOpacity(0.04),
+                        border: Border.all(
+                          color:
+                              selected
+                                  ? Colors.white24
+                                  : Colors.white.withOpacity(0.08),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          _BottomNavIcon(item: item, selected: selected),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              item.label,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight:
+                                    selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: selected ? Colors.white : Colors.white38,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GlobalMiniPlayer extends StatelessWidget {
   const _GlobalMiniPlayer({required this.show});
 
@@ -348,9 +640,13 @@ class _GlobalMiniPlayer extends StatelessWidget {
         }
 
         final durationMs =
-            player.duration.inMilliseconds <= 0 ? 1 : player.duration.inMilliseconds;
-        final progress =
-            (player.position.inMilliseconds / durationMs).clamp(0.0, 1.0);
+            player.duration.inMilliseconds <= 0
+                ? 1
+                : player.duration.inMilliseconds;
+        final progress = (player.position.inMilliseconds / durationMs).clamp(
+          0.0,
+          1.0,
+        );
 
         return GestureDetector(
           onTap: () {
@@ -362,7 +658,12 @@ class _GlobalMiniPlayer extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: ResponsiveUtils.isTablet(context) ? 560 : double.infinity,
+                maxWidth:
+                    ResponsiveUtils.isDesktop(context)
+                        ? ResponsiveUtils.pageMaxWidth(context)
+                        : (ResponsiveUtils.isTablet(context)
+                            ? 560
+                            : double.infinity),
               ),
               child: Container(
                 height: ResponsiveUtils.miniPlayerHeight(context),
@@ -415,7 +716,8 @@ class _GlobalMiniPlayer extends StatelessWidget {
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: ResponsiveUtils.isCompact(context) ? 10 : 12,
+                        horizontal:
+                            ResponsiveUtils.isCompact(context) ? 10 : 12,
                       ),
                       child: Row(
                         children: [
@@ -423,8 +725,10 @@ class _GlobalMiniPlayer extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
                               player.currentAlbumArt ?? '',
-                              width: ResponsiveUtils.isCompact(context) ? 44 : 50,
-                              height: ResponsiveUtils.isCompact(context) ? 44 : 50,
+                              width:
+                                  ResponsiveUtils.isCompact(context) ? 44 : 50,
+                              height:
+                                  ResponsiveUtils.isCompact(context) ? 44 : 50,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) {
                                 return const Icon(
@@ -486,7 +790,9 @@ class _GlobalMiniPlayer extends StatelessWidget {
                                     : Icons.play_arrow_rounded,
                                 color: Colors.white,
                                 size:
-                                    ResponsiveUtils.isCompact(context) ? 22 : 24,
+                                    ResponsiveUtils.isCompact(context)
+                                        ? 22
+                                        : 24,
                               ),
                               onPressed: player.togglePlayPause,
                             ),

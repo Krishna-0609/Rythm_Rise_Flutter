@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +11,7 @@ import '../../data/song_fetcher.dart';
 import '../../provider/song_player_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/responsive_utils.dart';
+import '../../widgets/adaptive_path_image.dart';
 import '../../widgets/app_loading_widget.dart';
 import 'liked_page.dart';
 import 'now_playing_page.dart';
@@ -81,7 +81,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _recentlyPlayedCount = recent.length;
       _librarySongCount = songCount;
       _listenerName = listenerName;
-      _profileImageUrl = savedPhoto != null && savedPhoto.isNotEmpty ? savedPhoto : null;
+      _profileImageUrl =
+          savedPhoto != null && savedPhoto.isNotEmpty ? savedPhoto : null;
       _loading = false;
     });
   }
@@ -135,13 +136,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         selectedImagePath = picked;
                       });
                     },
-                    onClearImage: selectedImagePath == null
-                        ? null
-                        : () {
-                            setModalState(() {
-                              selectedImagePath = null;
-                            });
-                          },
+                    onClearImage:
+                        selectedImagePath == null
+                            ? null
+                            : () {
+                              setModalState(() {
+                                selectedImagePath = null;
+                              });
+                            },
                   );
                 },
               ),
@@ -300,9 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (duration <= Duration.zero) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a valid timer duration first'),
-        ),
+        const SnackBar(content: Text('Enter a valid timer duration first')),
       );
       return;
     }
@@ -314,9 +314,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          'Sleep timer set for ${_formatTimerLabel(duration)}',
-        ),
+        content: Text('Sleep timer set for ${_formatTimerLabel(duration)}'),
       ),
     );
   }
@@ -332,45 +330,43 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
         title: Text(
           'Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
-      body: _loading
-          ? const AppLoadingWidget()
-          : Consumer<SongPlayerProvider>(
-        builder: (context, player, _) {
-          return RefreshIndicator(
-            onRefresh: _loadProfileData,
-            color: AppColors.iconcolor2,
-            backgroundColor: AppColors.secondary,
-            child: ListView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
+      body:
+          _loading
+              ? const AppLoadingWidget()
+              : Consumer<SongPlayerProvider>(
+                builder: (context, player, _) {
+                  return RefreshIndicator(
+                    onRefresh: _loadProfileData,
+                    color: AppColors.iconcolor2,
+                    backgroundColor: AppColors.secondary,
+                    child: ListView(
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        12,
+                        horizontalPadding,
+                        28,
+                      ),
+                      children: [
+                        _buildHeaderCard(player),
+                        SizedBox(height: sectionGap),
+                        _buildStatsSection(player),
+                        SizedBox(height: sectionGap),
+                        _buildQuickActions(context, player),
+                        SizedBox(height: sectionGap),
+                        _buildPreferencesCard(player),
+                        SizedBox(height: sectionGap),
+                        _buildAboutCard(),
+                      ],
+                    ),
+                  );
+                },
               ),
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                12,
-                horizontalPadding,
-                28,
-              ),
-              children: [
-                _buildHeaderCard(player),
-                SizedBox(height: sectionGap),
-                _buildStatsSection(player),
-                SizedBox(height: sectionGap),
-                _buildQuickActions(context, player),
-                SizedBox(height: sectionGap),
-                _buildPreferencesCard(player),
-                SizedBox(height: sectionGap),
-                _buildAboutCard(),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 
@@ -496,13 +492,15 @@ class _ProfilePageState extends State<ProfilePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  player.isPlaying ? Icons.graphic_eq : Icons.headphones_rounded,
+                  player.isPlaying
+                      ? Icons.graphic_eq
+                      : Icons.headphones_rounded,
                   color: AppColors.iconcolor1,
                 ),
                 const SizedBox(width: 10),
                 Text(
                   player.isPlaying ? 'Playback active' : 'Ready to play',
-          style: TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
@@ -536,56 +534,58 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 14),
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 900
-                ? 4
-                : constraints.maxWidth >= 600
-                ? 3
-                : 2;
+            final columns =
+                constraints.maxWidth >= 900
+                    ? 4
+                    : constraints.maxWidth >= 600
+                    ? 3
+                    : 2;
             final aspectRatio = constraints.maxWidth < 360 ? 1.05 : 1.25;
 
             return GridView.count(
-          shrinkWrap: true,
-          crossAxisCount: columns,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: aspectRatio,
-          children: [
-              _StatTile(
-                title: 'Library',
-                value: _librarySongCount == null ? '...' : '$_librarySongCount',
-                note: 'Songs in your collection',
-                icon: Icons.library_music_rounded,
-                accent: const Color(0xff9F86FF),
-              ),
-              _StatTile(
-                title: 'Favorites',
-                value: '${player.favoriteSongs.length}',
-                note: 'Songs you loved',
-                icon: Icons.favorite_rounded,
-                accent: AppColors.iconcolor2,
-              ),
-              _StatTile(
-                title: 'Queue',
-                value: '${player.queuedSongs.length}',
-                note: 'Songs queued next',
-                icon: Icons.queue_music_rounded,
-                accent: AppColors.iconcolor1,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const _QueuePage()),
-                  );
-                },
-              ),
-              _StatTile(
-                title: 'Recent',
-                value: _loading ? '...' : '$_recentlyPlayedCount',
-                note: 'Recently played',
-                icon: Icons.history_rounded,
-                accent: const Color(0xff7AD7F0),
-              ),
-            ],
+              shrinkWrap: true,
+              crossAxisCount: columns,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: aspectRatio,
+              children: [
+                _StatTile(
+                  title: 'Library',
+                  value:
+                      _librarySongCount == null ? '...' : '$_librarySongCount',
+                  note: 'Songs in your collection',
+                  icon: Icons.library_music_rounded,
+                  accent: const Color(0xff9F86FF),
+                ),
+                _StatTile(
+                  title: 'Favorites',
+                  value: '${player.favoriteSongs.length}',
+                  note: 'Songs you loved',
+                  icon: Icons.favorite_rounded,
+                  accent: AppColors.iconcolor2,
+                ),
+                _StatTile(
+                  title: 'Queue',
+                  value: '${player.queuedSongs.length}',
+                  note: 'Songs queued next',
+                  icon: Icons.queue_music_rounded,
+                  accent: AppColors.iconcolor1,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const _QueuePage()),
+                    );
+                  },
+                ),
+                _StatTile(
+                  title: 'Recent',
+                  value: _loading ? '...' : '$_recentlyPlayedCount',
+                  note: 'Recently played',
+                  icon: Icons.history_rounded,
+                  accent: const Color(0xff7AD7F0),
+                ),
+              ],
             );
           },
         ),
@@ -653,9 +653,15 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         children: [
           _PreferenceTile(
-            icon: player.isShuffle ? Icons.shuffle_on_rounded : Icons.shuffle_rounded,
+            icon:
+                player.isShuffle
+                    ? Icons.shuffle_on_rounded
+                    : Icons.shuffle_rounded,
             title: 'Shuffle',
-            subtitle: player.isShuffle ? 'Songs will play in mixed order' : 'Songs follow playlist order',
+            subtitle:
+                player.isShuffle
+                    ? 'Songs will play in mixed order'
+                    : 'Songs follow playlist order',
             trailing: Switch(
               value: player.isShuffle,
               activeColor: AppColors.iconcolor2,
@@ -664,9 +670,15 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const Divider(color: Colors.white12, height: 1),
           _PreferenceTile(
-            icon: player.isRepeat ? Icons.repeat_one_rounded : Icons.repeat_rounded,
+            icon:
+                player.isRepeat
+                    ? Icons.repeat_one_rounded
+                    : Icons.repeat_rounded,
             title: 'Repeat One',
-            subtitle: player.isRepeat ? 'Current song repeats continuously' : 'Playback stops after queue ends',
+            subtitle:
+                player.isRepeat
+                    ? 'Current song repeats continuously'
+                    : 'Playback stops after queue ends',
             trailing: Switch(
               value: player.isRepeat,
               activeColor: AppColors.iconcolor1,
@@ -710,10 +722,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     player.hasSleepTimer
                         ? 'Pauses music automatically at ${_formatPauseTime(player.sleepTimerEndsAt)}'
                         : 'Pick a countdown and Rythm will pause your song for you',
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      height: 1.35,
-                    ),
+                    style: const TextStyle(color: Colors.white60, height: 1.35),
                   ),
                 ],
               ),
@@ -728,9 +737,10 @@ class _ProfilePageState extends State<ProfilePage> {
             color: Colors.white.withOpacity(player.hasSleepTimer ? 0.08 : 0.04),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: player.hasSleepTimer
-                  ? AppColors.iconcolor2.withOpacity(0.45)
-                  : Colors.white10,
+              color:
+                  player.hasSleepTimer
+                      ? AppColors.iconcolor2.withOpacity(0.45)
+                      : Colors.white10,
             ),
           ),
           child: Row(
@@ -740,15 +750,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: player.hasSleepTimer
-                        ? [
-                            AppColors.iconcolor2.withOpacity(0.9),
-                            AppColors.iconcolor1.withOpacity(0.9),
-                          ]
-                        : [
-                            Colors.white12,
-                            Colors.white10,
-                          ],
+                    colors:
+                        player.hasSleepTimer
+                            ? [
+                              AppColors.iconcolor2.withOpacity(0.9),
+                              AppColors.iconcolor1.withOpacity(0.9),
+                            ]
+                            : [Colors.white12, Colors.white10],
                   ),
                 ),
                 child: Icon(
@@ -879,11 +887,7 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           Text(
             'Rythm is your local streaming-style player with favorites, queue control, and full-screen playback.',
-            style: TextStyle(
-              color: Colors.white70,
-              height: 1.5,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white70, height: 1.5, fontSize: 14),
           ),
           SizedBox(height: 14),
           Row(
@@ -918,18 +922,10 @@ class _ProfileImage extends StatelessWidget {
       color: Colors.white,
     );
 
-    if (_looksLikeNetworkImage(imagePath)) {
-      return Image.network(
-        imagePath,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => fallback,
-      );
-    }
-
-    return Image.file(
-      File(imagePath),
+    return AdaptivePathImage(
+      path: imagePath,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => fallback,
+      fallback: fallback,
     );
   }
 }
@@ -961,10 +957,7 @@ class _ProfileImagePickerField extends StatelessWidget {
         children: [
           Text(
             'Profile photo',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           Center(
@@ -980,16 +973,17 @@ class _ProfileImagePickerField extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(3),
                 child: ClipOval(
-                  child: hasImage
-                      ? _ProfileImage(imagePath: imagePath!)
-                      : Container(
-                          color: Colors.white.withOpacity(0.08),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            color: Colors.white70,
-                            size: 46,
+                  child:
+                      hasImage
+                          ? _ProfileImage(imagePath: imagePath!)
+                          : Container(
+                            color: Colors.white.withOpacity(0.08),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              color: Colors.white70,
+                              size: 46,
+                            ),
                           ),
-                        ),
                 ),
               ),
             ),
@@ -1030,11 +1024,6 @@ class _ProfileImagePickerField extends StatelessWidget {
       ),
     );
   }
-}
-
-bool _looksLikeNetworkImage(String value) {
-  final trimmed = value.trim().toLowerCase();
-  return trimmed.startsWith('http://') || trimmed.startsWith('https://');
 }
 
 class _SectionCard extends StatelessWidget {
@@ -1173,10 +1162,7 @@ class _QueuePage extends StatelessWidget {
         centerTitle: true,
         title: Text(
           'Your Queue',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
       body: Consumer<SongPlayerProvider>(
@@ -1193,7 +1179,7 @@ class _QueuePage extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white60,
                     height: 1.5,
-                    fontWeight: FontWeight.bold
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -1258,11 +1244,9 @@ class _QueuePage extends StatelessWidget {
                     style: const TextStyle(color: Colors.white60),
                   ),
                   trailing: IconButton(
-                    onPressed: () => player.removeFromQueue(song['id'].toString()),
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: Colors.white70,
-                    ),
+                    onPressed:
+                        () => player.removeFromQueue(song['id'].toString()),
+                    icon: Icon(Icons.close_rounded, color: Colors.white70),
                   ),
                 ),
               );
@@ -1321,10 +1305,7 @@ class _ActionRow extends StatelessWidget {
           ),
         ),
       ),
-      trailing: Icon(
-        Icons.chevron_right_rounded,
-        color: Colors.white54,
-      ),
+      trailing: Icon(Icons.chevron_right_rounded, color: Colors.white54),
     );
   }
 }
@@ -1379,6 +1360,3 @@ class _PreferenceTile extends StatelessWidget {
     );
   }
 }
-
-
-

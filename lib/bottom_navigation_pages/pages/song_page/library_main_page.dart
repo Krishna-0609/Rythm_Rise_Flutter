@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,6 +10,7 @@ import 'package:rythm/bottom_navigation_pages/pages/song_page/tamil_new_page.dar
 import 'package:rythm/bottom_navigation_pages/pages/song_page/tamil_vintage_page.dart';
 import 'package:rythm/provider/custom_playlist_provider.dart';
 import 'package:rythm/provider/song_player_provider.dart';
+import 'package:rythm/widgets/adaptive_path_image.dart';
 import 'package:rythm/widgets/song_action_sheet.dart';
 
 import '../../../theme/app_colors.dart';
@@ -88,7 +87,7 @@ class LibraryMainPage extends StatelessWidget {
       _LibraryCategory(
         title: 'Ilaiyaraaja Hits',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774432318/kmf6hmqlup22luzzkxnv.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774432318/kmf6hmqlup22luzzkxnv.jpg',
         page: ArtistPlaylistPage(
           title: 'Ilaiyaraaja Hits',
           artistKeywords: ['Ilaiyaraaja'],
@@ -97,16 +96,16 @@ class LibraryMainPage extends StatelessWidget {
       _LibraryCategory(
         title: 'S.P.Balasubrahmanyam',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774442495/jl91hbadje1ozprnajml.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774442495/jl91hbadje1ozprnajml.jpg',
         page: ArtistPlaylistPage(
           title: 'S.P.Balasubrahmanyam',
-          artistKeywords: ['S.P.Balasubrahmanyam',"S.P.B"],
+          artistKeywords: ['S.P.Balasubrahmanyam', "S.P.B"],
         ),
       ),
       _LibraryCategory(
         title: 'A.R.Rahman Hits',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774507273/jk5jourft28wqni7vkvl.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774507273/jk5jourft28wqni7vkvl.jpg',
         page: ArtistPlaylistPage(
           title: 'A.R.Rahman Hits',
           artistKeywords: ['A.R.Rahman'],
@@ -115,25 +114,25 @@ class LibraryMainPage extends StatelessWidget {
       _LibraryCategory(
         title: 'G.V.Prakash Hits',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774612639/j23svngsecytau56hm5n.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774612639/j23svngsecytau56hm5n.jpg',
         page: ArtistPlaylistPage(
           title: 'G.V.Prakash Hits',
-          artistKeywords: ['G.V.Pragash','G. V. Prakash Kumar','G.V'],
+          artistKeywords: ['G.V.Pragash', 'G. V. Prakash Kumar', 'G.V'],
         ),
       ),
       _LibraryCategory(
         title: 'Yuvan Shankar Raja',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774614308/optgcdeqkgb07i1sxdzb.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774614308/optgcdeqkgb07i1sxdzb.jpg',
         page: ArtistPlaylistPage(
           title: 'Yuvan Shankar Raja',
-          artistKeywords: ['Yuvan Shankar Raja','Yuvan','U1'],
+          artistKeywords: ['Yuvan Shankar Raja', 'Yuvan', 'U1'],
         ),
       ),
       _LibraryCategory(
         title: 'Shreya Ghoshal',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774614922/wxjro9ladd6jk26yxvkm.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774614922/wxjro9ladd6jk26yxvkm.jpg',
         page: ArtistPlaylistPage(
           title: 'Shreya Ghoshal',
           artistKeywords: ['Shreya Ghoshal'],
@@ -142,26 +141,23 @@ class LibraryMainPage extends StatelessWidget {
       _LibraryCategory(
         title: 'Mano Hits',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774615253/qqshrwcolzn9okqpcifr.jpg',
-        page: ArtistPlaylistPage(
-          title: 'Mano Hits',
-          artistKeywords: ['Mano'],
-        ),
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774615253/qqshrwcolzn9okqpcifr.jpg',
+        page: ArtistPlaylistPage(title: 'Mano Hits', artistKeywords: ['Mano']),
       ),
 
       _LibraryCategory(
         title: 'S. Janaki',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774616117/erzjy6rvtfj7nciuyc0z.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774616117/erzjy6rvtfj7nciuyc0z.jpg',
         page: ArtistPlaylistPage(
           title: 'S. Janaki',
-          artistKeywords: ['S. Janaki','Janaki'],
+          artistKeywords: ['S. Janaki', 'Janaki'],
         ),
       ),
       _LibraryCategory(
         title: 'Harris Jayaraj',
         imageUrl:
-        'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774701967/fxd7abvr6onzer1hwtp1.jpg',
+            'https://res.cloudinary.com/dvhh2bbcp/image/upload/v1774701967/fxd7abvr6onzer1hwtp1.jpg',
         page: ArtistPlaylistPage(
           title: 'Harris Jayaraj',
           artistKeywords: ['Harris Jayaraj'],
@@ -351,13 +347,14 @@ class _PreloadedLibraryTab extends StatelessWidget {
                           category.imageUrl,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Center(
-                            child: Icon(
-                              Icons.music_note,
-                              size: 40,
-                              color: Colors.white54,
-                            ),
-                          ),
+                          errorBuilder:
+                              (_, __, ___) => const Center(
+                                child: Icon(
+                                  Icons.music_note,
+                                  size: 40,
+                                  color: Colors.white54,
+                                ),
+                              ),
                         ),
                       ),
                     ),
@@ -432,11 +429,7 @@ class _LibraryTabChip extends StatelessWidget {
                 color: Colors.white.withOpacity(0.14),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: compact ? 18 : 20,
-              ),
+              child: Icon(icon, color: Colors.white, size: compact ? 18 : 20),
             ),
             const SizedBox(width: 10),
             Flexible(
@@ -504,9 +497,7 @@ class _CustomLibraryTab extends StatelessWidget {
             bottomInset,
           ),
           children: [
-            _CreatePlaylistCard(
-              onTap: () => _showCreatePlaylistSheet(context),
-            ),
+            _CreatePlaylistCard(onTap: () => _showCreatePlaylistSheet(context)),
             const SizedBox(height: 18),
             if (playlists.playlists.isEmpty)
               Container(
@@ -559,9 +550,10 @@ class _CustomLibraryTab extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => _CustomPlaylistDetailPage(
-                            playlistId: playlist.id,
-                          ),
+                          builder:
+                              (_) => _CustomPlaylistDetailPage(
+                                playlistId: playlist.id,
+                              ),
                         ),
                       );
                     },
@@ -588,11 +580,12 @@ class _CustomLibraryTab extends StatelessWidget {
                         Icons.delete_outline_rounded,
                         color: Colors.white54,
                       ),
-                      onPressed: () => _confirmDeletePlaylist(
-                        context,
-                        playlists,
-                        playlist,
-                      ),
+                      onPressed:
+                          () => _confirmDeletePlaylist(
+                            context,
+                            playlists,
+                            playlist,
+                          ),
                     ),
                   ),
                 );
@@ -663,10 +656,7 @@ class _CustomLibraryTab extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Text(
                       'Make a custom playlist with your own title and cover art.',
-                      style: TextStyle(
-                        color: Colors.white60,
-                        height: 1.45,
-                      ),
+                      style: TextStyle(color: Colors.white60, height: 1.45),
                     ),
                     const SizedBox(height: 18),
                     _ElegantInputField(
@@ -681,9 +671,10 @@ class _CustomLibraryTab extends StatelessWidget {
                           label: 'Playlist cover',
                           imagePath: selectedImagePath,
                           placeholderIcon: Icons.photo_library_outlined,
-                          buttonLabel: selectedImagePath == null
-                              ? 'Choose From Device'
-                              : 'Change Image',
+                          buttonLabel:
+                              selectedImagePath == null
+                                  ? 'Choose From Device'
+                                  : 'Change Image',
                           onPickImage: () async {
                             final picked = await _pickImageFromGallery(context);
                             if (picked == null) return;
@@ -691,13 +682,14 @@ class _CustomLibraryTab extends StatelessWidget {
                               selectedImagePath = picked;
                             });
                           },
-                          onClearImage: selectedImagePath == null
-                              ? null
-                              : () {
-                                  setModalState(() {
-                                    selectedImagePath = null;
-                                  });
-                                },
+                          onClearImage:
+                              selectedImagePath == null
+                                  ? null
+                                  : () {
+                                    setModalState(() {
+                                      selectedImagePath = null;
+                                    });
+                                  },
                         );
                       },
                     ),
@@ -706,7 +698,9 @@ class _CustomLibraryTab extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
-                          await context.read<CustomPlaylistProvider>().createPlaylist(
+                          await context
+                              .read<CustomPlaylistProvider>()
+                              .createPlaylist(
                                 name: nameController.text,
                                 imageUrl: selectedImagePath ?? '',
                               );
@@ -777,17 +771,11 @@ class _CustomLibraryTab extends StatelessWidget {
           ),
           title: const Text(
             'Delete Playlist?',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           content: Text(
             'Are you sure you want to delete "${playlist.name}"? This action cannot be undone.',
-            style: const TextStyle(
-              color: Colors.white70,
-              height: 1.5,
-            ),
+            style: const TextStyle(color: Colors.white70, height: 1.5),
           ),
           actions: [
             TextButton(
@@ -924,36 +912,17 @@ class _PlaylistCover extends StatelessWidget {
       );
     }
 
-    if (!_looksLikeNetworkImage(imageUrl)) {
-      return Image.file(
-        File(imageUrl),
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
-          return Container(
-            width: size,
-            height: size,
-            color: Colors.white.withOpacity(0.08),
-            child: const Icon(Icons.queue_music_rounded, color: Colors.white70),
-          );
-        },
-      );
-    }
-
-    return Image.network(
-      imageUrl,
+    return AdaptivePathImage(
+      path: imageUrl,
       width: size,
       height: size,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) {
-        return Container(
-          width: size,
-          height: size,
-          color: Colors.white.withOpacity(0.08),
-          child: const Icon(Icons.queue_music_rounded, color: Colors.white70),
-        );
-      },
+      fallback: Container(
+        width: size,
+        height: size,
+        color: Colors.white.withOpacity(0.08),
+        child: const Icon(Icons.queue_music_rounded, color: Colors.white70),
+      ),
     );
   }
 }
@@ -1006,15 +975,14 @@ class _ImagePickerField extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
-              child: hasImage
-                  ? Image.file(
-                      File(imagePath!),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _ImagePlaceholder(
-                        icon: placeholderIcon,
-                      ),
-                    )
-                  : _ImagePlaceholder(icon: placeholderIcon),
+              child:
+                  hasImage
+                      ? AdaptivePathImage(
+                        path: imagePath!,
+                        fit: BoxFit.cover,
+                        fallback: _ImagePlaceholder(icon: placeholderIcon),
+                      )
+                      : _ImagePlaceholder(icon: placeholderIcon),
             ),
           ),
           const SizedBox(height: 12),
@@ -1087,11 +1055,6 @@ class _ImagePlaceholder extends StatelessWidget {
   }
 }
 
-bool _looksLikeNetworkImage(String value) {
-  final trimmed = value.trim().toLowerCase();
-  return trimmed.startsWith('http://') || trimmed.startsWith('https://');
-}
-
 double _libraryBottomInset(BuildContext context) {
   final hasMiniPlayer = context.select<SongPlayerProvider, bool>(
     (player) => player.currentSongTitle != null,
@@ -1115,12 +1078,13 @@ class _CustomPlaylistDetailPage extends StatelessWidget {
       builder: (context, playlists, player, _) {
         final playlist = playlists.playlists.firstWhere(
           (item) => item.id == playlistId,
-          orElse: () => const CustomPlaylist(
-            id: '',
-            name: 'Playlist',
-            imageUrl: '',
-            songs: [],
-          ),
+          orElse:
+              () => const CustomPlaylist(
+                id: '',
+                name: 'Playlist',
+                imageUrl: '',
+                songs: [],
+              ),
         );
 
         return Scaffold(
@@ -1146,7 +1110,10 @@ class _CustomPlaylistDetailPage extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(18),
-                      child: _PlaylistCover(imageUrl: playlist.imageUrl, size: 86),
+                      child: _PlaylistCover(
+                        imageUrl: playlist.imageUrl,
+                        size: 86,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -1215,15 +1182,16 @@ class _CustomPlaylistDetailPage extends StatelessWidget {
                               width: 56,
                               height: 56,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 56,
-                                height: 56,
-                                color: Colors.white10,
-                                child: const Icon(
-                                  Icons.music_note_rounded,
-                                  color: Colors.white70,
-                                ),
-                              ),
+                              errorBuilder:
+                                  (_, __, ___) => Container(
+                                    width: 56,
+                                    height: 56,
+                                    color: Colors.white10,
+                                    child: const Icon(
+                                      Icons.music_note_rounded,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -1274,6 +1242,3 @@ class _CustomPlaylistDetailPage extends StatelessWidget {
     );
   }
 }
-
-
-
