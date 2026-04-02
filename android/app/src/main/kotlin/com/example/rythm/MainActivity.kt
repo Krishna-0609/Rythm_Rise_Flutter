@@ -35,10 +35,10 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
 
+                    MusicService.pendingSongsJson = songsJson
                     startMusicService(
                         Intent(this, MusicService::class.java).apply {
                             action = MusicService.ACTION_LOAD_QUEUE
-                            putExtra(MusicService.EXTRA_SONGS_JSON, songsJson)
                             putExtra(MusicService.EXTRA_INDEX, index)
                             putExtra(MusicService.EXTRA_PLAY_WHEN_READY, playWhenReady)
                         }

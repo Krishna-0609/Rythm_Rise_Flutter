@@ -7,8 +7,16 @@ class AppLoadingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Image.asset('assets/Splash Animation.gif', height: height),
+    final availableHeight = MediaQuery.sizeOf(context).height;
+    final loaderHeight = height.clamp(120.0, availableHeight * 0.24);
+
+    return SizedBox.expand(
+      child: Center(
+        child: Image.asset(
+          'assets/Splash Animation.gif',
+          height: loaderHeight,
+        ),
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rythm/provider/custom_playlist_provider.dart';
 import 'package:rythm/provider/song_player_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -23,6 +24,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => CustomPlaylistProvider()),
         ChangeNotifierProvider(
           create: (_) {
             songProviderInstance = SongPlayerProvider();

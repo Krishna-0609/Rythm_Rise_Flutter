@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../data/song_fetcher.dart';
 import '../../../provider/song_player_provider.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/responsive_utils.dart';
 import '../../../widgets/app_loading_widget.dart';
 import '../../../widgets/song_action_sheet.dart';
 
@@ -28,7 +30,7 @@ class _TamilVintageSongState extends State<TamilVintageSong> {
 
   Future<void> fetchSongs() async {
     try {
-      final response = await supabase.from('tamil_vintage').select('*');
+      final response = await fetchAllSongs(supabase, 'tamil_vintage');
 
       if (!mounted) return;
 
@@ -68,6 +70,8 @@ class _TamilVintageSongState extends State<TamilVintageSong> {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = ResponsiveUtils.horizontalPadding(context);
+    final compact = ResponsiveUtils.isCompact(context);
     return Scaffold(
       backgroundColor: AppColors.primary,
 
@@ -100,7 +104,12 @@ class _TamilVintageSongState extends State<TamilVintageSong> {
                 ),
               )
               : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  compact ? 14 : 20,
+                  horizontalPadding,
+                  16,
+                ),
                 itemCount: songs.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
@@ -119,8 +128,8 @@ class _TamilVintageSongState extends State<TamilVintageSong> {
                             borderRadius: BorderRadius.circular(10),
                             child: Image.network(
                               song["album_art"] ?? "",
-                              width: 60,
-                              height: 60,
+                              width: compact ? 54 : 60,
+                              height: compact ? 54 : 60,
                               fit: BoxFit.cover,
                               errorBuilder:
                                   (_, __, ___) => const Icon(
@@ -130,7 +139,7 @@ class _TamilVintageSongState extends State<TamilVintageSong> {
                                   ),
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          SizedBox(width: compact ? 12 : 20),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -138,18 +147,30 @@ class _TamilVintageSongState extends State<TamilVintageSong> {
                               children: [
                                 Text(
                                   song['title'] ?? "Unknown Title",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
+                                    fontSize: ResponsiveUtils.responsiveFont(
+                                      context,
+                                      compact: 14,
+                                      regular: 15,
+                                      tablet: 16,
+                                    ),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   song['artist'] ?? "Unknown Artist",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.white70,
                                     fontWeight: FontWeight.w500,
+                                    fontSize: ResponsiveUtils.responsiveFont(
+                                      context,
+                                      compact: 12,
+                                      regular: 13,
+                                      tablet: 14,
+                                    ),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),

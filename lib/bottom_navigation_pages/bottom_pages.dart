@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,6 +12,7 @@ import 'package:rythm/bottom_navigation_pages/pages/now_playing_page.dart';
 
 import '../provider/song_player_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/responsive_utils.dart';
 
 class BottomPages extends StatefulWidget {
   const BottomPages({super.key});
@@ -111,6 +114,7 @@ class _BottomPagesState extends State<BottomPages> {
     return WillPopScope(
       onWillPop: _onBackPressed,
       child: Scaffold(
+        extendBody: true,
         backgroundColor: AppColors.primary,
         body: PageView(
           controller: _pageController,
@@ -118,14 +122,23 @@ class _BottomPagesState extends State<BottomPages> {
           physics: const BouncingScrollPhysics(),
           children: _pages,
         ),
-        bottomNavigationBar: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const _GlobalMiniPlayer(),
-              _BottomNavBar(selectedIndex: _selectedIndex, onTap: _onItemTapped),
-            ],
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Material(
+            color: Colors.transparent,
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _GlobalMiniPlayer(show: _selectedIndex != 4),
+                  _BottomNavBar(
+                    selectedIndex: _selectedIndex,
+                    onTap: _onItemTapped,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -141,6 +154,10 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalMargin = ResponsiveUtils.horizontalPadding(context) - 2;
+    final compact = ResponsiveUtils.isCompact(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final maxWidth = ResponsiveUtils.isTablet(context) ? 560.0 : width;
     final items = <_NavItemData>[
       const _NavItemData(
         label: 'Home',
@@ -172,58 +189,97 @@ class _BottomNavBar extends StatelessWidget {
       ),
     ];
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: List.generate(items.length, (index) {
-          final item = items[index];
-          final selected = index == selectedIndex;
-
-          return Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => onTap(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  color:
-                      selected
-                          ? Colors.white.withOpacity(0.07)
-                          : Colors.transparent,
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.14),
+                  blurRadius: 28,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedScale(
-                      scale: selected ? 1.05 : 0.96,
-                      duration: const Duration(milliseconds: 220),
-                      child: _BottomNavIcon(item: item, selected: selected),
-                    ),
-                    const SizedBox(height: 4),
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 220),
-                      style: TextStyle(
-                        color: selected ? Colors.white : Colors.white54,
-                        fontSize: selected ? 11.5 : 10.5,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.22),
+                  blurRadius: 24,
+                  offset: const Offset(0, 14),
+                ),
+              ],
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 6 : 8,
+                  vertical: compact ? 6 : 8,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                  color: const Color(0xff151A2A).withOpacity(0.58),
+                ),
+                child: Row(
+                  children: List.generate(items.length, (index) {
+                    final item = items[index];
+                    final selected = index == selectedIndex;
+
+                    return Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => onTap(index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutCubic,
+                          padding: EdgeInsets.symmetric(vertical: compact ? 7 : 9),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color:
+                                selected
+                                    ? Colors.white.withOpacity(0.12)
+                                    : Colors.transparent,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AnimatedScale(
+                                scale: selected ? 1.04 : 0.96,
+                                duration: const Duration(milliseconds: 220),
+                                child: _BottomNavIcon(item: item, selected: selected),
+                              ),
+                              const SizedBox(height: 4),
+                              AnimatedDefaultTextStyle(
+                                duration: const Duration(milliseconds: 220),
+                                style: TextStyle(
+                                  color: selected ? Colors.white : Colors.white70,
+                                  fontSize:
+                                      selected
+                                          ? (compact ? 10 : 11)
+                                          : (compact ? 9 : 10),
+                                  fontWeight:
+                                      selected ? FontWeight.w700 : FontWeight.w500,
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(item.label, maxLines: 1),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Text(item.label),
-                    ),
-                  ],
+                    );
+                  }),
                 ),
               ),
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
   }
@@ -238,19 +294,25 @@ class _BottomNavIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (selected) {
-      return Image.asset(item.imageAsset, height: 34, width: 34);
+      final size = ResponsiveUtils.navIconSize(context, selected: true);
+      return Image.asset(item.imageAsset, height: size, width: size);
     }
 
     if (item.inactiveAsset != null) {
+      final size = ResponsiveUtils.navIconSize(context, selected: false);
       return Image.asset(
         item.inactiveAsset!,
-        height: 28,
-        width: 28,
-        color: Colors.white54,
+        height: size,
+        width: size,
+        color: Colors.white70,
       );
     }
 
-    return Icon(item.outlinedIcon, size: 29, color: Colors.white54);
+    return Icon(
+      item.outlinedIcon,
+      size: ResponsiveUtils.navIconSize(context, selected: false),
+      color: Colors.white70,
+    );
   }
 }
 
@@ -269,10 +331,16 @@ class _NavItemData {
 }
 
 class _GlobalMiniPlayer extends StatelessWidget {
-  const _GlobalMiniPlayer();
+  const _GlobalMiniPlayer({required this.show});
+
+  final bool show;
 
   @override
   Widget build(BuildContext context) {
+    if (!show) {
+      return const SizedBox.shrink();
+    }
+
     return Consumer<SongPlayerProvider>(
       builder: (context, player, _) {
         if (player.currentSongTitle == null) {
@@ -291,101 +359,144 @@ class _GlobalMiniPlayer extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const NowPlayingPage()),
             );
           },
-          child: Container(
-            height: 72,
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withOpacity(0.72),
-                  const Color(0xff2A1C35).withOpacity(0.78),
-                ],
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: ResponsiveUtils.isTablet(context) ? 560 : double.infinity,
               ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(20),
-                    ),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 3,
-                      backgroundColor: Colors.white10,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.iconcolor2,
-                      ),
-                    ),
-                  ),
+              child: Container(
+                height: ResponsiveUtils.miniPlayerHeight(context),
+                margin: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.horizontalPadding(context) - 2,
+                  vertical: 6,
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          player.currentAlbumArt ?? '',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) {
-                            return const Icon(
-                              Icons.music_note,
-                              color: Colors.white,
-                              size: 35,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              player.currentSongTitle ?? '',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              player.currentArtist ?? '',
-                              style: const TextStyle(color: Colors.white70),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            player.isPlaying
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                            color: Colors.white,
-                          ),
-                          onPressed: player.togglePlayPause,
-                        ),
-                      ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withOpacity(0.74),
+                      const Color(0xff2A1C35).withOpacity(0.82),
                     ],
                   ),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.20),
+                      blurRadius: 24,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 6),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.26),
+                      blurRadius: 28,
+                      offset: const Offset(0, 14),
+                    ),
+                  ],
                 ),
-              ],
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(22),
+                        ),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 3,
+                          backgroundColor: Colors.white10,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.iconcolor2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveUtils.isCompact(context) ? 10 : 12,
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              player.currentAlbumArt ?? '',
+                              width: ResponsiveUtils.isCompact(context) ? 44 : 50,
+                              height: ResponsiveUtils.isCompact(context) ? 44 : 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) {
+                                return const Icon(
+                                  Icons.music_note,
+                                  color: Colors.white,
+                                  size: 35,
+                                );
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            width: ResponsiveUtils.isCompact(context) ? 10 : 12,
+                          ),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  player.currentSongTitle ?? '',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: ResponsiveUtils.responsiveFont(
+                                      context,
+                                      compact: 12,
+                                      regular: 13,
+                                      tablet: 14,
+                                    ),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  player.currentArtist ?? '',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: ResponsiveUtils.responsiveFont(
+                                      context,
+                                      compact: 11,
+                                      regular: 12,
+                                      tablet: 13,
+                                    ),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                player.isPlaying
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size:
+                                    ResponsiveUtils.isCompact(context) ? 22 : 24,
+                              ),
+                              onPressed: player.togglePlayPause,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         );

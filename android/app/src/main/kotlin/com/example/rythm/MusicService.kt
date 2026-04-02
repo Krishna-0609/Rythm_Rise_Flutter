@@ -49,6 +49,9 @@ class MusicService : Service() {
 
         private const val CHANNEL_ID = "native_music_service"
         private const val NOTIFICATION_ID = 1101
+
+        @Volatile
+        var pendingSongsJson: String? = null
     }
 
     private data class SongItem(
@@ -139,10 +142,11 @@ class MusicService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_LOAD_QUEUE -> {
-                val songsJson = intent.getStringExtra(EXTRA_SONGS_JSON)
+                val songsJson = pendingSongsJson
                 val index = intent.getIntExtra(EXTRA_INDEX, 0)
                 val playWhenReady = intent.getBooleanExtra(EXTRA_PLAY_WHEN_READY, true)
                 if (songsJson != null) {
+                    pendingSongsJson = null
                     loadQueue(songsJson, index, playWhenReady)
                 }
             }

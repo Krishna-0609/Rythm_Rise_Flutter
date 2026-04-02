@@ -9,18 +9,25 @@ import '../../../theme/responsive_utils.dart';
 import '../../../widgets/app_loading_widget.dart';
 import '../../../widgets/song_action_sheet.dart';
 
-class TamilBeatPage extends StatefulWidget {
-  const TamilBeatPage({super.key});
+class ArtistPlaylistPage extends StatefulWidget {
+  const ArtistPlaylistPage({
+    super.key,
+    required this.title,
+    required this.artistKeywords,
+  });
+
+  final String title;
+  final List<String> artistKeywords;
 
   @override
-  State<TamilBeatPage> createState() => _TamilBeatPageState();
+  State<ArtistPlaylistPage> createState() => _ArtistPlaylistPageState();
 }
 
-class _TamilBeatPageState extends State<TamilBeatPage> {
+class _ArtistPlaylistPageState extends State<ArtistPlaylistPage> {
+  final SupabaseClient supabase = Supabase.instance.client;
+
   List<Map<String, dynamic>> songs = [];
   bool isLoading = true;
-
-  final SupabaseClient supabase = Supabase.instance.client;
 
   @override
   void initState() {
@@ -30,27 +37,48 @@ class _TamilBeatPageState extends State<TamilBeatPage> {
 
   Future<void> fetchSongs() async {
     try {
-      final response = await fetchAllSongs(supabase, 'tamil_beat_song');
+      final response = await fetchAllSongs(supabase, 'songs');
+      final filteredSongs =
+          List<Map<String, dynamic>>.from(response).where(_matchesArtist).toList();
+
+      filteredSongs.sort(
+        (a, b) => (a['title'] ?? '').toString().toLowerCase().compareTo(
+          (b['title'] ?? '').toString().toLowerCase(),
+        ),
+      );
 
       if (!mounted) return;
 
       setState(() {
-        songs = List<Map<String, dynamic>>.from(response);
-
-        songs.sort(
-          (a, b) =>
-              a['title'].toLowerCase().compareTo(b['title'].toLowerCase()),
-        );
-
+        songs = filteredSongs;
         isLoading = false;
       });
     } catch (error) {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
-
-      debugPrint("🚨 Error fetching songs: $error");
+      if (!mounted) return;
+      setState(() => isLoading = false);
+      debugPrint('Error fetching artist playlist for ${widget.title}: $error');
     }
+  }
+
+  bool _matchesArtist(Map<String, dynamic> song) {
+    final artist = _normalizeArtist(song['artist']?.toString() ?? '');
+
+    if (artist.isEmpty) {
+      return false;
+    }
+
+    return widget.artistKeywords.any(
+      (keyword) => artist.contains(_normalizeArtist(keyword)),
+    );
+  }
+
+  String _normalizeArtist(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll('&', 'and')
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   void _playSong(Map<String, dynamic> song) {
@@ -63,7 +91,6 @@ class _TamilBeatPageState extends State<TamilBeatPage> {
       playerProvider.togglePlayPause();
     } else {
       playerProvider.setPlaylist(songs);
-
       playerProvider.playSong(song);
     }
   }
@@ -72,34 +99,38 @@ class _TamilBeatPageState extends State<TamilBeatPage> {
   Widget build(BuildContext context) {
     final horizontalPadding = ResponsiveUtils.horizontalPadding(context);
     final compact = ResponsiveUtils.isCompact(context);
+
     return Scaffold(
       backgroundColor: AppColors.primary,
-
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
         ),
-
         centerTitle: true,
-
         backgroundColor: AppColors.primary,
-
-        title: const Text(
-          "Tamil Beat Songs",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       ),
       body:
           isLoading
               ? const AppLoadingWidget()
               : songs.isEmpty
-              ? const Center(
-                child: Text(
-                  'No songs available',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+              ? Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Text(
+                    'No songs found for ${widget.title}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               )
@@ -158,6 +189,7 @@ class _TamilBeatPageState extends State<TamilBeatPage> {
                                     ),
                                   ),
                                   overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -173,6 +205,7 @@ class _TamilBeatPageState extends State<TamilBeatPage> {
                                     ),
                                   ),
                                   overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ],
                             ),
